@@ -109,8 +109,8 @@ def bfs(start_state, strategy, heuristic,results):
                 frontier.add(successors[i], heuristic(strategy,successors[i]))
                 frontier_count+=1
     return {
-        'frontier_count': frontier_count,
-        'expanded_count': len(explored_count),
+        results['frontier_count']: frontier_count,
+        results['expanded_count']: len(explored_count),
     }
 
 def greedy(start_state, strategy, heuristic,results):
@@ -147,8 +147,8 @@ def greedy(start_state, strategy, heuristic,results):
                 frontier.add(successors[i], heuristic(strategy,successors[i]))
                 frontier_count+=1
     return {
-        'frontier_count': frontier_count,
-        'expanded_count': len(explored_count),
+        results['frontier_count']: frontier_count,
+        results['expanded_count']: len(explored_count),
     }
 
 def ucost_and_astar(start_state, strategy, heuristic,results):
@@ -187,8 +187,8 @@ def ucost_and_astar(start_state, strategy, heuristic,results):
                     trace[successors[i]] = (i, node)
     
     return {
-       'frontier_count': frontier_count,
-       'expanded_count': len(explored_count),
+        results['frontier_count']: frontier_count,
+        results['expanded_count']: len(explored_count),
     }
 
 
