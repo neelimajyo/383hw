@@ -80,7 +80,7 @@ def backlog(log, startState):
     path.reverse()
     return path, totalCost
 ####################################################################################
-def bfs(start, strategy, results,heuristic):
+def bfs(start, strategy,heuristic,results):
     frontier_count = 1
     frontier = pdqpq.PriorityQueue()
     explored_nodes = set()
@@ -185,9 +185,9 @@ def ucost(start, strategy,heuristic,results):
         for i in successors:
             x,y = node.find('0')
             holderNode = successors[i]
-            node_cost = int(successors[i]._get_tile(x,y))**2
+            nodeCost = int(successors[i]._get_tile(x,y))**2
             heuristic_cost = heuristic(strategy,successors[i]) 
-            temp = node_cost+pathCost+heuristic_cost
+            temp = nodeCost+pathCost+heuristic_cost
             #if (n not in frontier) 
             if (successors[i] not in frontier):
             # (n not in explored): 
@@ -230,9 +230,9 @@ def astar(start, strategy, heuristic,results):
         for i in successors:
             x,y = node.find('0')
             holderNode = successors[i]
-            node_cost = int(successors[i]._get_tile(x,y))**2
+            nodeCost = int(successors[i]._get_tile(x,y))**2
             heuristic_cost = heuristic(strategy,successors[i]) 
-            temp = node_cost+pathCost+heuristic_cost
+            temp = nodeCost+pathCost+heuristic_cost
             #if (n not in frontier) 
             if (successors[i] not in frontier):
             # (n not in explored): 
