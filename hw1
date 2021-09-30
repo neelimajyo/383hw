@@ -6,8 +6,8 @@ This is a temporary script file.
 """
 
 import sys
-import puzz.py
-import pdqpq.py
+import puzz
+import pdqpq
 
 
 MAX_SEARCH_ITERS = 100000
@@ -49,154 +49,207 @@ def solve_puzzle(start_state, strategy):
         'frontier_count': 0,
         'expanded_count': 0,
     }
+    
     if strategy == 'bfs':
-        results = bfs(start_state,strategy,lambda x,y:0,results)
+        #sys.argv
+        results = bfs(start_state,strategy,heuristic,results)
     elif strategy == 'ucost':
-        results = ucost_and_astar(start_state, strategy, lambda x,y:0,results)
-    elif strategy[:6] == 'greedy':
+        results = ucost(start_state, strategy, heuristic,results)
+    elif strategy == 'greedy':
         results = greedy(start_state, strategy, heuristic,results)
-    elif strategy[:5] == 'astar':
-        results = ucost_and_astar(start_state, strategy, heuristic,results)
+    elif strategy == 'astar':
+        results = astar(start_state, strategy, heuristic,results)
     # 
     # fill in the function body here
     #
+    print("RESULTS:")
     return results
-
-def backtrace(trace, startState):
-    total_cost = 0
-    path = [(trace[GOAL_STATE][0],GOAL_STATE)]
+####################################################################################
+def backlog(log, startState):
+    totalCost = 0
+    path = [(log[GOAL_STATE][0],GOAL_STATE)]
     while path[-1][1] != startState:
-        temp = trace[path[-1][1]][1]
+        temp = log[path[-1][1]][1]
         x,y = temp.find('0')
         holder = int(path[-1][1]._get_tile(x,y))**2
-        total_cost += holder
-        if (temp != startState):
-            path.append(trace[temp][0], temp) 
-        else:
-            path.append('start', temp)   
+        totalCost += holder
+        if temp != startState:
+            path.append((log[temp][0], temp))
+        else: 
+            path.append(('start', temp))
     path.reverse()
-    return path, total_cost
-
-def bfs(start_state, strategy, heuristic,results):
+    return path, totalCost
+####################################################################################
+def bfs(start, strategy, results,heuristic):
     frontier_count = 1
     frontier = pdqpq.PriorityQueue()
-    explored_count = set()
-    trace = {}
-    frontier.add(start_state, heuristic(strategy,start_state))
+    explored_nodes = set()
+    log = {}
+    frontier.add(start, heuristic(strategy,start))
+   # while not is_empty(frontier):
     while len(frontier)>=1:
+        #node = frontier.get_next_node() 
         node = frontier.pop()
-        if node == GOAL_STATE:
-            path,total_cost = backtrace(trace, start_state)
-            results['path'] = path
-            results['path_cost'] = total_cost
-            results['frontier_count'] = frontier_count
-            results['expanded_count'] = len(explored_count)
+        #if is_goal(node): 
+        if node == GOAL_STATE: #base case 
+        #return solution 
+            results.update({'path': [("start", start)], 'path_cost': 1,'frontier_count':frontier_count,'expanded_count':len(explored_nodes)})
             return results
-        explored_count.add(node)
+        #explored.add(node) 
+        explored_nodes.add(node)
+        #expanding nodes
         successors = node.successors()
+        #for n in expand(node):
         for i in successors:
-            if (successors[i] not in frontier):
-                if (successors[i] not in explored_count):
-                    trace[successors[i]] = (i, node)
-                    if successors[i] == GOAL_STATE:
-                        path,total_cost = backtrace(trace, start_state)
-                        results['path'] = path
-                        results['path_cost'] = total_cost
-                        results['frontier_count'] = frontier_count
-                        results['expanded_count'] = len(explored_count)
-                        return results
-            else:
-                frontier.add(successors[i], heuristic(strategy,successors[i]))
-                frontier_count+=1
-    return {
-   results['frontier_count']: frontier_count,
-   results['expanded_count']: len(explored_count)
-  # return results
-   }
-
-def greedy(start_state, strategy, heuristic,results):
+            #if (n not in frontier) 
+                if (successors[i] not in frontier):
+            # (n not in explored): 
+                 if (successors[i] not in explored_nodes):
+                    # frontier.add(i)
+                     log[successors[i]] = (i, node)
+                     if successors[i] == GOAL_STATE:
+                          path = backlog(log, start)[0]
+                          totalCost = backlog(log, start)[1]
+                          results.update({'path': path, 'path_cost': totalCost,'frontier_count':frontier_count,'expanded_count':len(explored_nodes)})
+                          return results
+                     else:
+                         frontier.add(successors[i], heuristic(strategy,successors[i]))
+                         frontier_count+=1
+    results.update({'frontier_count':frontier_count,'expanded_count':len(explored_nodes)})
+    return results
+####################################################################################
+def greedy(start, strategy, heuristic,results):
     frontier_count = 1
     frontier = pdqpq.PriorityQueue()
-    explored_count = set()
-    trace = {}
-    frontier.add(start_state, heuristic(strategy,start_state))
+    explored_nodes = set()
+    log = {}
+    frontier.add(start, heuristic(strategy,start))
+    # while not is_empty(frontier):
     while len(frontier)>=1:
+        #node = frontier.get_next_node() 
         node = frontier.pop()
-        if node == GOAL_STATE:
-            path,total_cost = backtrace(trace, start_state)
-            frontier_count+=1
-            results['path'] = path
-            results['path_cost'] = total_cost
-            results['frontier_count'] = frontier_count
-            results['expanded_count'] = len(explored_count)
+        #if is_goal(node): 
+        if node == GOAL_STATE: #base case 
+        #return solution 
+            path = backlog(log, start)[0]
+            totalCost = backlog(log, start)[1]
+            results.update({'path': path, 'path_cost': totalCost,'frontier_count':(frontier_count+1),'expanded_count':len(explored_nodes)})
             return results
-        explored_count.add(node)
+        #explored.add(node) 
+        explored_nodes.add(node)
+        #expanding nodes
         successors = node.successors()
+        #for n in expand(node):
         for i in successors:
-            if (successors[i] not in frontier):
-                if (successors[i] not in explored_count):
-                    trace[successors[i]] = (i, node)
-                    if successors[i] == GOAL_STATE:
-                        frontier_count+=1
-                        path,total_cost = backtrace(trace, start_state)
-                        results['path'] = path
-                        results['path_cost'] = total_cost
-                        results['frontier_count'] = frontier_count
-                        results['expanded_count'] = len(explored_count)
-                        return results
-            else:
-                frontier.add(successors[i], heuristic(strategy,successors[i]))
-                frontier_count+=1
-    return {
-   results['frontier_count']: frontier_count,
-   results['expanded_count']: len(explored_count)
-  # return results
-   }
-
-def ucost_and_astar(start_state, strategy, heuristic,results):
-    trace = {}
+            #if (n not in frontier) 
+                if (successors[i] not in frontier):
+            # (n not in explored): 
+                  if (successors[i] not in explored_nodes):
+                    # frontier.add(i)
+                      log[successors[i]] = (i, node)
+                      if successors[i] == GOAL_STATE:
+                          path = backlog(log, start)[0]
+                          totalCost = backlog(log, start)[1]
+                          results.update({'path': path, 'path_cost': totalCost,'frontier_count':(frontier_count+1),'expanded_count':len(explored_nodes)})
+                          return results
+                      else:
+                          frontier.add(successors[i], heuristic(strategy,successors[i]))
+                          frontier_count+=1
+    results.update({'frontier_count':frontier_count,'expanded_count':len(explored_nodes)})
+    return results
+####################################################################################
+def ucost(start, strategy,heuristic,results):
     frontier_count = 1
     frontier = pdqpq.PriorityQueue()
-    explored_count = set()
-    frontier.add(start_state, 0)
+    explored_nodes = set()
+    log = {}
+    #frontier.add(start, heuristic(strategy,start))
+    frontier.add(start,0)
+    # while not is_empty(frontier):
     while len(frontier)>=1:
-        path_cost = frontier.pq[0][0]
+        #node = frontier.get_next_node() 
+        pathCost = frontier.pq[0][0]
         node = frontier.pop()
-        path_cost -= heuristic(strategy, node)
-        if node == GOAL_STATE:
-            path,_ = backtrace(trace, start_state) 
-            results['path'] = path
-            results['path_cost'] = path_cost
-            results['frontier_count'] = frontier_count
-            results['expanded_count'] = len(explored_count)
+        pathCost -= heuristic(strategy,node)
+        #if is_goal(node): 
+        if node == GOAL_STATE: #base case 
+        #return solution 
+            path = backlog(log, start)[0]
+            results.update({'path': path, 'path_cost': pathCost,'frontier_count':frontier_count,'expanded_count':len(explored_nodes)})
             return results
-        explored_count.add(node)
+        #explored.add(node) 
+        explored_nodes.add(node)
+        #expanding nodes
         successors = node.successors()
+        #for n in expand(node):
         for i in successors:
             x,y = node.find('0')
-            holder = int(successors[i]._get_tile(x,y))**2
-            node_cost = holder
-            heu_cost = heuristic(strategy,successors[i]) 
+            holderNode = successors[i]
+            node_cost = int(successors[i]._get_tile(x,y))**2
+            heuristic_cost = heuristic(strategy,successors[i]) 
+            temp = node_cost+pathCost+heuristic_cost
+            #if (n not in frontier) 
             if (successors[i] not in frontier):
-                if(successors[i] not in explored_count):
-                    frontier_count  += 1
-                    temp = node_cost+path_cost+heu_cost
-                    frontier.add(successors[i], temp)
-                    trace[successors[i]] = (i, node)
+            # (n not in explored): 
+                if (successors[i] not in explored_nodes):
+                    # frontier.add(i)  
+                    frontier_count+=1
+                    frontier.add(holderNode,temp)
+                    log[holderNode] = (i,node)
             elif (successors[i] in frontier):
-                if(not frontier.get(successors[i]) <=  node_cost+path_cost+heu_cost):
-                    frontier.entry_finder[successors[i]][0] =  node_cost+path_cost+heu_cost
-                    trace[successors[i]] = (i, node)
-    
-    return {
-   results['frontier_count']: frontier_count,
-   results['expanded_count']: len(explored_count)
-  # return results
-   }
-
-
+                if(not frontier.get(holderNode) <=  temp):
+                    frontier.entry_finder[successors[i]][0] =  temp
+                    backlog[holderNode] = (i, node)
+    results.update({'frontier_count':frontier_count,'expanded_count':len(explored_nodes)})
+    return results
+####################################################################################
+def astar(start, strategy, heuristic,results):
+    frontier_count = 1
+    frontier = pdqpq.PriorityQueue()
+    explored_nodes = set()
+    log = {}
+    #frontier.add(start, heuristic(strategy,start))
+    frontier.add(start,0)
+    # while not is_empty(frontier):
+    while len(frontier)>=1:
+        #node = frontier.get_next_node() 
+        pathCost = frontier.pq[0][0]
+        node = frontier.pop()
+        pathCost -= heuristic(strategy,node)
+        #if is_goal(node): 
+        if node == GOAL_STATE: #base case 
+        #return solution 
+            path = backlog(log, start)[0]
+            results.update({'path': path, 'path_cost': pathCost,'frontier_count':frontier_count,'expanded_count':len(explored_nodes)})
+            return results
+        #explored.add(node) 
+        explored_nodes.add(node)
+        #expanding nodes
+        successors = node.successors()
+        #for n in expand(node):
+        for i in successors:
+            x,y = node.find('0')
+            holderNode = successors[i]
+            node_cost = int(successors[i]._get_tile(x,y))**2
+            heuristic_cost = heuristic(strategy,successors[i]) 
+            temp = node_cost+pathCost+heuristic_cost
+            #if (n not in frontier) 
+            if (successors[i] not in frontier):
+            # (n not in explored): 
+                if (successors[i] not in explored_nodes):
+                    # frontier.add(i)  
+                    frontier_count+=1
+                    frontier.add(holderNode,temp)
+                    log[holderNode] = (i,node)
+            elif (successors[i] in frontier):
+                if(not frontier.get(holderNode) <=  temp):
+                    frontier.entry_finder[successors[i]][0] =  temp
+                    backlog[holderNode] = (i, node)
+    results.update({'frontier_count':frontier_count,'expanded_count':len(explored_nodes)})
+    return results
+####################################################################################
 def heuristic(strategy,state):
-    if strategy == 'greedy-h1' or strategy == 'astar-h1':
+    if strategy == 'greedy-h1':
         stat = '012345678'
         state_str = state.__str__()
         count = 0
@@ -206,10 +259,23 @@ def heuristic(strategy,state):
                     if(s1 != i):
                         count+=1
         return count
-    else:
+    
+    elif strategy == 'astar-h1':
+        stat = '012345678'
+        state_str = state.__str__()
+        count = 0
+        for s1 in stat:
+            for i in state_str:
+                if(s1 != '0'):
+                    if(s1 != i):
+                        count+=1
+        return count
+    
+    elif strategy == 'greedy-h3' or strategy == 'astar-h3':
         return gh2_ah2_gh3_gh4(strategy,state)
-    return 0
-
+    else:
+        return 0
+####################################################################################
 def gh2_ah2_gh3_gh4(strategy,state):
     sum = 0
     for s in state._board:
